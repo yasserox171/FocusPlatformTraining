@@ -79,6 +79,7 @@ class ContentItemCreate(BaseModel):
     title_fr: str
     category_id: uuid.UUID | None = None
     pass_threshold: float = 35.0
+    duration_hours: int = 0
     units: list[UnitIn] = []      # للدورات
     lessons: list[LessonIn] = []  # للدروس المستقلة
 
@@ -88,6 +89,7 @@ class ContentItemUpdate(BaseModel):
     title_fr: str | None = None
     category_id: uuid.UUID | None = None
     pass_threshold: float | None = None
+    duration_hours: int | None = None
 
 
 class QuizQuestionOut(BaseModel):
@@ -154,6 +156,7 @@ class ContentItemOut(BaseModel):
     status: ContentStatus
     is_ai_generated: bool
     pass_threshold: float
+    duration_hours: int
     published_at: datetime | None
     created_at: datetime
 

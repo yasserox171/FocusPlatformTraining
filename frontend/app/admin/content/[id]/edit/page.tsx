@@ -14,6 +14,7 @@ interface Detail {
   status: "draft" | "published";
   is_ai_generated: boolean;
   pass_threshold: number;
+  duration_hours: number;
   units: {
     id: string;
     title_ar: string;
@@ -32,6 +33,7 @@ export default function EditContentPage() {
   const [titleAr, setTitleAr] = useState("");
   const [titleFr, setTitleFr] = useState("");
   const [passThreshold, setPassThreshold] = useState(35);
+  const [durationHours, setDurationHours] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -42,6 +44,7 @@ export default function EditContentPage() {
         setTitleAr(d.title_ar);
         setTitleFr(d.title_fr);
         setPassThreshold(d.pass_threshold);
+        setDurationHours(d.duration_hours);
       })
       .catch((e) => setError(e.message));
   }, [id]);
@@ -52,7 +55,7 @@ export default function EditContentPage() {
     try {
       await api(`/api/admin/content/${id}`, {
         method: "PUT",
-        body: JSON.stringify({ title_ar: titleAr, title_fr: titleFr, pass_threshold: passThreshold }),
+        body: JSON.stringify({ title_ar: titleAr, title_fr: titleFr, pass_threshold: passThreshold, duration_hours: durationHours }),
       });
       setSaved(true);
     } catch (e) {
@@ -98,17 +101,29 @@ export default function EditContentPage() {
           <input dir="ltr" className={input} value={titleFr} onChange={(e) => setTitleFr(e.target.value)} />
         </div>
         {item.type === "course" && (
-          <label className="block text-sm">
-            نسبة نجاح الكويز النهائي / Seuil de réussite (%)
-            <input
-              type="number"
-              min={0}
-              max={100}
-              className={`${input} mt-1 w-32`}
-              value={passThreshold}
-              onChange={(e) => setPassThreshold(Number(e.target.value))}
-            />
-          </label>
+          <div className="flex flex-wrap gap-6">
+            <label className="block text-sm">
+              نسبة نجاح الكويز النهائي / Seuil de réussite (%)
+              <input
+                type="number"
+                min={0}
+                max={100}
+                className={`${input} mt-1 w-32`}
+                value={passThreshold}
+                onChange={(e) => setPassThreshold(Number(e.target.value))}
+              />
+            </label>
+            <label className="block text-sm">
+              مدة التكوين بالساعات / Durée (heures)
+              <input
+                type="number"
+                min={0}
+                className={`${input} mt-1 w-32`}
+                value={durationHours}
+                onChange={(e) => setDurationHours(Number(e.target.value))}
+              />
+            </label>
+          </div>
         )}
         {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-danger">{error}</p>}
         {saved && <p className="rounded-lg bg-emerald-50 p-3 text-sm text-success">✓ تم الحفظ / Enregistré</p>}

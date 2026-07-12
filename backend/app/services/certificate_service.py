@@ -1,15 +1,16 @@
 """خدمة الشهادات — توليد PDF + QR + الرقم التسلسلي
 
-⚠️ قالب الشهادة الرسمي سيوفره ياسر لاحقاً — انظر app/utils/pdf_generator.py
+القالب الرسمي: app/assets/certificate_template.png — يُملأ في pdf_generator.py
 """
 import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models import Certificate, CertificateType, ContentItem, User
+from app.models import Certificate, CertificateType, ContentItem, LearnerProgress, User
 from app.utils.pdf_generator import render_certificate_pdf
 from app.utils.qr_generator import generate_qr_data_uri
 
@@ -45,20 +46,31 @@ def issue_certificate(
     verify_url = f"{settings.APP_URL}/verify/{serial}"
     qr_data_uri = generate_qr_data_uri(verify_url)
 
-    # 4. توليد PDF بالقالب (placeholder حتى يصل قالب ياسر)
-    type_ar, type_fr = CERT_TYPE_LABELS[cert_type]
+    # 4. توليد PDF بالقالب الرسمي
     issued = datetime.now(timezone.utc)
+
+    # فترة التكوين: من أول تقدم مسجّل للمتعلم في هذه الدورة حتى تاريخ الإصدار
+    first_progress = (
+        db.query(func.min(LearnerProgress.completed_at))
+        .filter(
+            LearnerProgress.learner_id == learner.id,
+            LearnerProgress.content_item_id == course.id,
+            LearnerProgress.completed_at.isnot(None),
+        )
+        .scalar()
+    )
+    period_start = (first_progress or issued).strftime("%d/%m/%Y")
+    period_end = issued.strftime("%d/%m/%Y")
+
     pdf_path = str(Path(settings.CERTIFICATES_DIR) / f"{serial}.pdf")
     render_certificate_pdf(
         pdf_path,
-        learner_name_ar=learner.full_name_ar,
-        learner_name_fr=learner.full_name_fr,
-        course_title_ar=course.title_ar,
-        course_title_fr=course.title_fr,
-        cert_type_ar=type_ar,
-        cert_type_fr=type_fr,
-        serial_number=serial,
-        issued_date=issued.strftime("%Y-%m-%d"),
+        learner_name=learner.full_name_fr,
+        course_title=course.title_fr,
+        duration_hours=course.duration_hours or None,
+        period_start=period_start,
+        period_end=period_end,
+        issued_date=issued.strftime("%d/%m/%Y"),
         qr_data_uri=qr_data_uri,
     )
 
@@ -76,6 +88,9 @@ def issue_certificate(
             "learner_name_fr": learner.full_name_fr,
             "course_title_ar": course.title_ar,
             "course_title_fr": course.title_fr,
+            "duration_hours": course.duration_hours,
+            "period_start": period_start,
+            "period_end": period_end,
         },
     )
     db.add(cert)

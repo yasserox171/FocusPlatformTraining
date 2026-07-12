@@ -58,6 +58,6 @@ npm run dev   # http://localhost:3000
 
 ## ملاحظات
 
-- **قالب الشهادة:** placeholder حالياً في `backend/app/utils/pdf_generator.py` — سيُستبدل بقالب ياسر الرسمي
+- **قالب الشهادة:** القالب الرسمي في `backend/app/assets/certificate_template.png` — الحقول الديناميكية (الاسم، الدورة، المدة، الفترة، التاريخ، QR) تُركَّب فوقه في `backend/app/utils/pdf_generator.py`. خط الاسم: Great Vibes (ترخيص OFL، مضمّن في `assets/fonts/`)
 - **WeasyPrint** يتطلب مكتبات نظام: `apt install libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0`
 - كل محتوى AI يُنشأ كـ **Draft** — الأدمين يراجع ثم يضغط "نشر / Publier"

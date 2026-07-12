@@ -69,6 +69,7 @@ def create_content_item(
         created_by=created_by.id,
         is_ai_generated=is_ai_generated,
         pass_threshold=payload.pass_threshold,
+        duration_hours=payload.duration_hours,
     )
     db.add(item)
     db.flush()

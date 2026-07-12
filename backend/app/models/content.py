@@ -64,6 +64,8 @@ class ContentItem(Base):
     is_ai_generated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # نسبة النجاح للكويز النهائي — قابلة للتخصيص per دورة (افتراضي 35%)
     pass_threshold: Mapped[float] = mapped_column(Float, default=35.0, nullable=False)
+    # مدة التكوين بالساعات — تظهر على الشهادة (0 = غير محددة)
+    duration_hours: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )

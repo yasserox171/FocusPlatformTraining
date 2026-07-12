@@ -366,6 +366,7 @@ export default function NewContentPage() {
   const [titleFr, setTitleFr] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [passThreshold, setPassThreshold] = useState(35);
+  const [durationHours, setDurationHours] = useState(0);
   const [categories, setCategories] = useState<{ id: string; name_ar: string; name_fr: string }[]>([]);
   const [units, setUnits] = useState<UnitForm[]>([emptyUnit()]);
   const [lessons, setLessons] = useState<LessonForm[]>([emptyLesson()]);
@@ -410,6 +411,7 @@ export default function NewContentPage() {
           title_fr: titleFr,
           category_id: categoryId || null,
           pass_threshold: passThreshold,
+          duration_hours: durationHours,
           units:
             type === "course"
               ? units.map((u, i) => ({
@@ -454,17 +456,29 @@ export default function NewContentPage() {
           <input dir="ltr" className={input} placeholder="Titre en français" value={titleFr} onChange={(e) => setTitleFr(e.target.value)} />
         </div>
         {type === "course" && (
-          <label className="block text-sm">
-            نسبة نجاح الكويز النهائي / Seuil de réussite (%)
-            <input
-              type="number"
-              min={0}
-              max={100}
-              className={`${input} mt-1 w-32`}
-              value={passThreshold}
-              onChange={(e) => setPassThreshold(Number(e.target.value))}
-            />
-          </label>
+          <div className="flex flex-wrap gap-6">
+            <label className="block text-sm">
+              نسبة نجاح الكويز النهائي / Seuil de réussite (%)
+              <input
+                type="number"
+                min={0}
+                max={100}
+                className={`${input} mt-1 w-32`}
+                value={passThreshold}
+                onChange={(e) => setPassThreshold(Number(e.target.value))}
+              />
+            </label>
+            <label className="block text-sm">
+              مدة التكوين بالساعات / Durée (heures) — تظهر على الشهادة
+              <input
+                type="number"
+                min={0}
+                className={`${input} mt-1 w-32`}
+                value={durationHours}
+                onChange={(e) => setDurationHours(Number(e.target.value))}
+              />
+            </label>
+          </div>
         )}
       </div>
 
