@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Env
+.env
+.env.local
+
+# Storage
+backend/uploads/
+backend/certificates/
+
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.vercel/
+
+# Misc
+.DS_Store
