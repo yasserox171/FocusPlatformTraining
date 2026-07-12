@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap");
+
+body {
+  font-family: "Cairo", sans-serif;
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* كتل المحتوى النصي — dir=auto يضبط الاتجاه تلقائياً */
+.content-html p,
+.content-html h2,
+.content-html h3,
+.content-html ul,
+.content-html ol {
+  margin-bottom: 0.5rem;
+}
+.content-html ul {
+  list-style: disc;
+  padding-inline-start: 1.5rem;
+}
+.content-html ol {
+  list-style: decimal;
+  padding-inline-start: 1.5rem;
+}
+.content-html h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.content-html h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
