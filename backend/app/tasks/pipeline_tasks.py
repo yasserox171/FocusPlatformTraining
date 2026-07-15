@@ -2,6 +2,7 @@
 
 المسار: I1 → R1 → I2 → R2 → DuplicateCheck → I3 → R3 → (انتظار المستخدم) → R4 → I4 → R5
 """
+import logging
 import uuid
 
 from app.database import SessionLocal
@@ -15,6 +16,8 @@ from app.services.ai_pipeline import (
     r5_upload,
 )
 from app.tasks.celery_app import celery_app
+
+logger = logging.getLogger(__name__)
 
 
 def _fail(db, job: AIPipelineJob, error: str):
@@ -38,7 +41,7 @@ def run_pipeline_until_user(job_id: str):
         try:
             validation = r1_validation.validate_prompt(job.prompt)
         except Exception:
-            # انقطاع الاتصال أو فشل الـ API
+            logger.exception("R1 validation failed for job %s", job_id)
             _fail(db, job, "connection_error")
             return
         if not validation.get("clear"):
@@ -53,6 +56,7 @@ def run_pipeline_until_user(job_id: str):
                 job.prompt, validation.get("language", "both"), validation.get("topic", "")
             )
         except Exception:
+            logger.exception("I2 search failed for job %s", job_id)
             _fail(db, job, "connection_error")
             return
         job.search_results = results
@@ -65,6 +69,7 @@ def run_pipeline_until_user(job_id: str):
         try:
             analysis = i3_analysis.analyze_sources(db, job.prompt, results)
         except Exception:
+            logger.exception("I3 analysis failed for job %s", job_id)
             _fail(db, job, "connection_error")
             return
 
@@ -107,6 +112,7 @@ def run_generation(job_id: str):
                 db, admin, job.search_results, job.analysis_results, job.user_answer, category_id
             )
         except Exception:
+            logger.exception("I4 generation failed for job %s", job_id)
             _fail(db, job, "generation_error")
             return
 
