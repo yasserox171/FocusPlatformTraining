@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -26,6 +27,7 @@ from app.services.progress_service import (
 )
 
 router = APIRouter(prefix="/api/learner", tags=["learner:progress"])
+logger = logging.getLogger(__name__)
 
 
 class ProgressUpdate(BaseModel):
@@ -65,12 +67,16 @@ def update_progress(
         # شهادة الحضور: إكمال جميع الوحدات — لا يُشترط أي نقطة
         if course_completed(db, learner, item):
             upsert_course_completion(db, learner, item)
-            cert = issue_certificate(db, learner, item, CertificateType.attendance)
-            certificate_awarded = {
-                "id": str(cert.id),
-                "type": cert.type.value,
-                "serial_number": cert.serial_number,
-            }
+            try:
+                cert = issue_certificate(db, learner, item, CertificateType.attendance)
+                certificate_awarded = {
+                    "id": str(cert.id),
+                    "type": cert.type.value,
+                    "serial_number": cert.serial_number,
+                }
+            except Exception:
+                # فشل توليد PDF (مثلاً مكتبات WeasyPrint غير مثبتة) لا يجب أن يُسقط الطلب
+                logger.exception("Attendance certificate issuance failed for course %s", item.id)
 
     return {
         "status": "completed",
@@ -176,12 +182,16 @@ def submit_final_quiz(
 
     certificate_awarded = None
     if passed:
-        cert = issue_certificate(db, learner, course, CertificateType.competency)
-        certificate_awarded = {
-            "id": str(cert.id),
-            "type": cert.type.value,
-            "serial_number": cert.serial_number,
-        }
+        try:
+            cert = issue_certificate(db, learner, course, CertificateType.competency)
+            certificate_awarded = {
+                "id": str(cert.id),
+                "type": cert.type.value,
+                "serial_number": cert.serial_number,
+            }
+        except Exception:
+            # فشل توليد PDF (مثلاً مكتبات WeasyPrint غير مثبتة) لا يجب أن يُسقط الطلب
+            logger.exception("Competency certificate issuance failed for course %s", course_id)
 
     return {
         "score": score,
