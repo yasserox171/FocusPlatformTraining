@@ -21,6 +21,7 @@ export default function CoursePage() {
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const [showingFinalQuiz, setShowingFinalQuiz] = useState(false);
   const [quizResult, setQuizResult] = useState<{
     score: number;
     passed: boolean;
@@ -80,14 +81,41 @@ export default function CoursePage() {
     }
   };
 
-  const goTo = async (index: number) => {
-    const target = flatLessons[index];
-    if (!target || target.locked) return;
-    // إكمال فقرات الدرس الحالي عند الانتقال
+  const isLastLesson = activeIndex >= 0 && activeIndex === flatLessons.length - 1;
+  const hasFinalQuiz = finalQuizQuestions.length > 0;
+
+  const goNext = async () => {
+    if (!course) return;
+    // أكمل فقرات الدرس الحالي أولاً — قد يفتح هذا الوحدة التالية عبر الـ Prerequisites
     if (activeLesson) {
       for (const p of activeLesson.paragraphs) await markCompleted(p);
     }
+    if (isLastLesson) {
+      if (hasFinalQuiz) {
+        setShowingFinalQuiz(true);
+        window.scrollTo({ top: 0 });
+      }
+      return;
+    }
+    const target = flatLessons[activeIndex + 1];
+    if (!target) return;
+    // أعد التحقق من القفل ببيانات طازجة بعد تسجيل الإكمال أعلاه
+    const fresh = await api<CourseDetail>(`/api/learner/course/${course.id}`);
+    setCourse(fresh);
+    const freshUnit = fresh.units.find((u) => u.lessons.some((l) => l.id === target.id));
+    if (freshUnit && !freshUnit.accessible) return;
     setActiveLessonId(target.id);
+    window.scrollTo({ top: 0 });
+  };
+
+  const goPrev = () => {
+    if (showingFinalQuiz) {
+      setShowingFinalQuiz(false);
+      window.scrollTo({ top: 0 });
+      return;
+    }
+    if (activeIndex <= 0) return;
+    setActiveLessonId(flatLessons[activeIndex - 1].id);
     window.scrollTo({ top: 0 });
   };
 
@@ -133,7 +161,10 @@ export default function CoursePage() {
                       <button
                         dir="auto"
                         disabled={!unit.accessible}
-                        onClick={() => setActiveLessonId(lesson.id)}
+                        onClick={() => {
+                          setActiveLessonId(lesson.id);
+                          setShowingFinalQuiz(false);
+                        }}
                         className={`w-full rounded-lg px-3 py-1.5 text-start text-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${
                           lesson.id === activeLessonId
                             ? "bg-primary text-white"
@@ -156,7 +187,10 @@ export default function CoursePage() {
                   <li key={lesson.id}>
                     <button
                       dir="auto"
-                      onClick={() => setActiveLessonId(lesson.id)}
+                      onClick={() => {
+                        setActiveLessonId(lesson.id);
+                        setShowingFinalQuiz(false);
+                      }}
                       className={`w-full rounded-lg px-3 py-1.5 text-start text-sm ${
                         lesson.id === activeLessonId ? "bg-primary text-white" : "hover:bg-slate-100"
                       }`}
@@ -172,7 +206,7 @@ export default function CoursePage() {
 
         {/* منطقة المحتوى — الفقرات بالترتيب */}
         <div className="min-w-0 flex-1 space-y-4">
-          {activeLesson ? (
+          {showingFinalQuiz ? null : activeLesson ? (
             <>
               <h2 dir="auto" className="text-xl font-bold">
                 {activeLesson.title_ar} / {activeLesson.title_fr}
@@ -197,13 +231,13 @@ export default function CoursePage() {
                   fr="Précédent"
                   variant="outline"
                   disabled={activeIndex <= 0}
-                  onClick={() => goTo(activeIndex - 1)}
+                  onClick={goPrev}
                 />
                 <BilingualButton
                   ar="التالي"
                   fr="Suivant"
-                  disabled={activeIndex >= flatLessons.length - 1}
-                  onClick={() => goTo(activeIndex + 1)}
+                  disabled={isLastLesson && !hasFinalQuiz}
+                  onClick={goNext}
                 />
               </div>
             </>
@@ -211,8 +245,8 @@ export default function CoursePage() {
             <p className="text-slate-500">لا دروس بعد / Pas encore de leçons</p>
           )}
 
-          {/* الكويز النهائي / Quiz final */}
-          {finalQuizQuestions.length > 0 && (
+          {/* الكويز النهائي / Quiz final — خطوة منفصلة تظهر بعد آخر درس */}
+          {showingFinalQuiz && hasFinalQuiz && (
             <section className="space-y-4 rounded-xl border-2 border-primary/30 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-bold text-primary">الكويز النهائي / Quiz final</h2>
               {finalQuizQuestions.map((q) => (
@@ -253,12 +287,15 @@ export default function CoursePage() {
                   )}
                 </div>
               )}
-              <BilingualButton
-                ar={quizResult && !quizResult.passed ? "إعادة المحاولة" : "تقديم"}
-                fr={quizResult && !quizResult.passed ? "Réessayer" : "Soumettre"}
-                variant="success"
-                onClick={submitFinalQuiz}
-              />
+              <div className="flex justify-between pt-2">
+                <BilingualButton ar="السابق" fr="Précédent" variant="outline" onClick={goPrev} />
+                <BilingualButton
+                  ar={quizResult && !quizResult.passed ? "إعادة المحاولة" : "تقديم"}
+                  fr={quizResult && !quizResult.passed ? "Réessayer" : "Soumettre"}
+                  variant="success"
+                  onClick={submitFinalQuiz}
+                />
+              </div>
             </section>
           )}
         </div>
