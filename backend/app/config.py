@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Claude API (Fable 5)
+    # Claude API
     ANTHROPIC_API_KEY: str = ""
-    CLAUDE_MODEL: str = "claude-fable-5"
+    CLAUDE_MODEL: str = "claude-sonnet-5"
 
     # Storage
     UPLOAD_DIR: str = "./uploads"

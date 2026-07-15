@@ -18,7 +18,8 @@ def ask_claude(system: str, user: str, max_tokens: int = 4096) -> str:
         system=system,
         messages=[{"role": "user", "content": user}],
     )
-    return response.content[0].text
+    # لا نفترض أن أول كتلة هي النص — قد تسبقها كتلة تفكير (thinking) حسب النموذج
+    return "".join(block.text for block in response.content if block.type == "text")
 
 
 def ask_claude_json(system: str, user: str, max_tokens: int = 4096) -> dict | list:

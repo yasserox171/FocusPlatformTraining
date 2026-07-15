@@ -23,7 +23,7 @@ def search_sources(prompt: str, language: str, topic: str) -> dict:
             model=settings.CLAUDE_MODEL,
             max_tokens=4096,
             system=SYSTEM,
-            tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 5}],
+            tools=[{"type": "web_search_20260209", "name": "web_search", "max_uses": 5}],
             messages=[{"role": "user", "content": query}],
         )
         text = "".join(block.text for block in response.content if block.type == "text")
